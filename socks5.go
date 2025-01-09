@@ -13,7 +13,7 @@ const (
 	socks5Version = uint8(5)
 )
 
-// Config is used to setup and configure a Server
+// Config is used to set up and configure a Server
 type Config struct {
 	// AuthMethods can be provided to implement custom authentication
 	// By default, "auth-less" mode is enabled.
@@ -49,7 +49,7 @@ type Config struct {
 	Dial func(ctx context.Context, network, addr string) (net.Conn, error)
 }
 
-// Server is reponsible for accepting connections and handling
+// Server is responsible for accepting connections and handling
 // the details of the SOCKS5 protocol
 type Server struct {
 	config      *Config

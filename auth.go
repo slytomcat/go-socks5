@@ -19,14 +19,13 @@ var (
 	NoSupportedAuth = fmt.Errorf("No supported authentication mechanism")
 )
 
-// A Request encapsulates authentication state provided
-// during negotiation
+// AuthContext encapsulates authentication state provided during negotiation
 type AuthContext struct {
 	// Provided auth method
 	Method uint8
 	// Payload provided during negotiation.
 	// Keys depend on the used auth method.
-	// For UserPassauth contains Username
+	// For UserPassAuth contains Username
 	Payload map[string]string
 }
 
@@ -74,7 +73,7 @@ func (a UserPassAuthenticator) Authenticate(reader io.Reader, writer io.Writer) 
 		return nil, fmt.Errorf("Unsupported auth version: %v", header[0])
 	}
 
-	// Get the user name
+	// Get the username
 	userLen := int(header[1])
 	user := make([]byte, userLen)
 	if _, err := io.ReadAtLeast(reader, user, userLen); err != nil {

@@ -72,7 +72,7 @@ type Request struct {
 	Command uint8
 	// AuthContext provided during negotiation
 	AuthContext *AuthContext
-	// AddrSpec of the the network that sent the request
+	// AddrSpec of the network that sent the request
 	RemoteAddr *AddrSpec
 	// AddrSpec of the desired destination
 	DestAddr *AddrSpec
@@ -259,7 +259,7 @@ func (s *Server) handleAssociate(ctx context.Context, conn conn, req *Request) e
 }
 
 // readAddrSpec is used to read AddrSpec.
-// Expects an address type byte, follwed by the address and port
+// Expects an address type byte, followed by the address and port
 func readAddrSpec(r io.Reader) (*AddrSpec, error) {
 	d := &AddrSpec{}
 
@@ -269,7 +269,7 @@ func readAddrSpec(r io.Reader) (*AddrSpec, error) {
 		return nil, err
 	}
 
-	// Handle on a per type basis
+	// Handle on a per-type basis
 	switch addrType[0] {
 	case ipv4Address:
 		addr := make([]byte, 4)
@@ -360,7 +360,7 @@ type closeWriter interface {
 	CloseWrite() error
 }
 
-// proxy is used to suffle data from src to destination, and sends errors
+// proxy is used to shuffle data from src to destination, and sends errors
 // down a dedicated channel
 func proxy(dst io.Writer, src io.Reader, errCh chan error) {
 	_, err := io.Copy(dst, src)
