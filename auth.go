@@ -3,6 +3,7 @@ package socks5
 import (
 	"fmt"
 	"io"
+	"net"
 )
 
 const (
@@ -30,7 +31,7 @@ type AuthContext struct {
 }
 
 type Authenticator interface {
-	Authenticate(reader io.Reader, writer io.Writer) (*AuthContext, error)
+	Authenticate(reader io.Reader, writer net.Conn) (*AuthContext, error)
 	GetCode() uint8
 }
 
@@ -41,7 +42,7 @@ func (a NoAuthAuthenticator) GetCode() uint8 {
 	return NoAuth
 }
 
-func (a NoAuthAuthenticator) Authenticate(reader io.Reader, writer io.Writer) (*AuthContext, error) {
+func (a NoAuthAuthenticator) Authenticate(reader io.Reader, writer net.Conn) (*AuthContext, error) {
 	_, err := writer.Write([]byte{socks5Version, NoAuth})
 	return &AuthContext{NoAuth, nil}, err
 }
@@ -56,7 +57,7 @@ func (a UserPassAuthenticator) GetCode() uint8 {
 	return UserPassAuth
 }
 
-func (a UserPassAuthenticator) Authenticate(reader io.Reader, writer io.Writer) (*AuthContext, error) {
+func (a UserPassAuthenticator) Authenticate(reader io.Reader, writer net.Conn) (*AuthContext, error) {
 	// Tell the client to use user/pass auth
 	if _, err := writer.Write([]byte{socks5Version, UserPassAuth}); err != nil {
 		return nil, err
@@ -109,7 +110,7 @@ func (a UserPassAuthenticator) Authenticate(reader io.Reader, writer io.Writer) 
 }
 
 // authenticate is used to handle connection authentication
-func (s *Server) authenticate(conn io.Writer, bufConn io.Reader) (*AuthContext, error) {
+func (s *Server) authenticate(conn net.Conn, bufConn io.Reader) (*AuthContext, error) {
 	// Get the methods
 	methods, err := readMethods(bufConn)
 	if err != nil {
@@ -130,7 +131,7 @@ func (s *Server) authenticate(conn io.Writer, bufConn io.Reader) (*AuthContext, 
 
 // noAcceptableAuth is used to handle when we have no eligible
 // authentication mechanism
-func noAcceptableAuth(conn io.Writer) error {
+func noAcceptableAuth(conn net.Conn) error {
 	conn.Write([]byte{socks5Version, noAcceptable})
 	return NoSupportedAuth
 }

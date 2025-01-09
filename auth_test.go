@@ -8,10 +8,10 @@ import (
 func TestNoAuth(t *testing.T) {
 	req := bytes.NewBuffer(nil)
 	req.Write([]byte{1, NoAuth})
-	var resp bytes.Buffer
+	conn := MockConn{}
 
 	s, _ := New(&Config{})
-	ctx, err := s.authenticate(&resp, req)
+	ctx, err := s.authenticate(&conn, req)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -20,7 +20,7 @@ func TestNoAuth(t *testing.T) {
 		t.Fatal("Invalid Context Method")
 	}
 
-	out := resp.Bytes()
+	out := conn.buf.Bytes()
 	if !bytes.Equal(out, []byte{socks5Version, NoAuth}) {
 		t.Fatalf("bad: %v", out)
 	}
@@ -30,7 +30,7 @@ func TestPasswordAuth_Valid(t *testing.T) {
 	req := bytes.NewBuffer(nil)
 	req.Write([]byte{2, NoAuth, UserPassAuth})
 	req.Write([]byte{1, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r'})
-	var resp bytes.Buffer
+	conn := MockConn{}
 
 	cred := StaticCredentials{
 		"foo": "bar",
@@ -40,7 +40,7 @@ func TestPasswordAuth_Valid(t *testing.T) {
 
 	s, _ := New(&Config{AuthMethods: []Authenticator{cator}})
 
-	ctx, err := s.authenticate(&resp, req)
+	ctx, err := s.authenticate(&conn, req)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestPasswordAuth_Valid(t *testing.T) {
 		t.Fatal("Invalid Username in auth context's payload")
 	}
 
-	out := resp.Bytes()
+	out := conn.buf.Bytes()
 	if !bytes.Equal(out, []byte{socks5Version, UserPassAuth, 1, authSuccess}) {
 		t.Fatalf("bad: %v", out)
 	}
@@ -68,7 +68,7 @@ func TestPasswordAuth_Invalid(t *testing.T) {
 	req := bytes.NewBuffer(nil)
 	req.Write([]byte{2, NoAuth, UserPassAuth})
 	req.Write([]byte{1, 3, 'f', 'o', 'o', 3, 'b', 'a', 'z'})
-	var resp bytes.Buffer
+	conn := MockConn{}
 
 	cred := StaticCredentials{
 		"foo": "bar",
@@ -76,7 +76,7 @@ func TestPasswordAuth_Invalid(t *testing.T) {
 	cator := UserPassAuthenticator{Credentials: cred}
 	s, _ := New(&Config{AuthMethods: []Authenticator{cator}})
 
-	ctx, err := s.authenticate(&resp, req)
+	ctx, err := s.authenticate(&conn, req)
 	if err != UserAuthFailed {
 		t.Fatalf("err: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestPasswordAuth_Invalid(t *testing.T) {
 		t.Fatal("Invalid Context Method")
 	}
 
-	out := resp.Bytes()
+	out := conn.buf.Bytes()
 	if !bytes.Equal(out, []byte{socks5Version, UserPassAuth, 1, authFailure}) {
 		t.Fatalf("bad: %v", out)
 	}
@@ -94,7 +94,7 @@ func TestPasswordAuth_Invalid(t *testing.T) {
 func TestNoSupportedAuth(t *testing.T) {
 	req := bytes.NewBuffer(nil)
 	req.Write([]byte{1, NoAuth})
-	var resp bytes.Buffer
+	conn := MockConn{}
 
 	cred := StaticCredentials{
 		"foo": "bar",
@@ -103,7 +103,7 @@ func TestNoSupportedAuth(t *testing.T) {
 
 	s, _ := New(&Config{AuthMethods: []Authenticator{cator}})
 
-	ctx, err := s.authenticate(&resp, req)
+	ctx, err := s.authenticate(&conn, req)
 	if err != NoSupportedAuth {
 		t.Fatalf("err: %v", err)
 	}
@@ -112,7 +112,7 @@ func TestNoSupportedAuth(t *testing.T) {
 		t.Fatal("Invalid Context Method")
 	}
 
-	out := resp.Bytes()
+	out := conn.buf.Bytes()
 	if !bytes.Equal(out, []byte{socks5Version, noAcceptable}) {
 		t.Fatalf("bad: %v", out)
 	}

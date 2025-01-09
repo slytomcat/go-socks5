@@ -13,6 +13,7 @@ import (
 
 type MockConn struct {
 	buf bytes.Buffer
+	net.Conn
 }
 
 func (m *MockConn) Write(b []byte) (int, error) {
