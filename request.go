@@ -7,6 +7,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -201,12 +202,15 @@ func (s *Server) handleConnect(ctx context.Context, conn conn, req *Request) err
 	go proxy(target, req.bufConn, errCh)
 	go proxy(conn, target, errCh)
 
-	// Wait
-	for i := 0; i < 2; i++ {
-		e := <-errCh
-		if e != nil {
-			// return from this function closes target (and conn).
-			return e
+	// Wait until one of the pipes has completed
+	e := <-errCh
+	if e == nil {
+		// Check if, perhaps the other channel produced an error
+		select {
+		case e = <-errCh:
+			// Update the error from the channel
+		case <-time.After(100 * time.Millisecond):
+			// The other channel did not complete, do not wait
 		}
 	}
 	return nil
