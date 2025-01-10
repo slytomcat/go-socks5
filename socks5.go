@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 )
 
 const (
@@ -53,7 +54,31 @@ type Config struct {
 // the details of the SOCKS5 protocol
 type Server struct {
 	config      *Config
-	authMethods map[uint8]Authenticator
+	authMethods *AuthMethods
+}
+
+type AuthMethods struct {
+	mutex sync.RWMutex
+	m     map[uint8]Authenticator
+}
+
+func NewAuthMethods() *AuthMethods {
+	return &AuthMethods{
+		m: make(map[uint8]Authenticator),
+	}
+}
+
+func (authMethods *AuthMethods) Set(key uint8, value Authenticator) {
+	authMethods.mutex.Lock()
+	defer authMethods.mutex.Unlock()
+	authMethods.m[key] = value
+}
+
+func (authMethods *AuthMethods) Get(key uint8) (Authenticator, bool) {
+	authMethods.mutex.RLock()
+	defer authMethods.mutex.RUnlock()
+	value, ok := authMethods.m[key]
+	return value, ok
 }
 
 // New creates a new Server and potentially returns an error
@@ -86,10 +111,10 @@ func New(conf *Config) (*Server, error) {
 		config: conf,
 	}
 
-	server.authMethods = make(map[uint8]Authenticator)
+	server.authMethods = NewAuthMethods()
 
 	for _, a := range conf.AuthMethods {
-		server.authMethods[a.GetCode()] = a
+		server.authMethods.Set(a.GetCode(), a)
 	}
 
 	return server, nil

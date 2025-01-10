@@ -119,7 +119,7 @@ func (s *Server) authenticate(conn net.Conn, bufConn io.Reader) (*AuthContext, e
 
 	// Select a usable method
 	for _, method := range methods {
-		cator, found := s.authMethods[method]
+		cator, found := s.authMethods.Get(method)
 		if found {
 			return cator.Authenticate(bufConn, conn)
 		}
