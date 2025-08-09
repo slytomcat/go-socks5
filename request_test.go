@@ -26,11 +26,11 @@ func (m *MockConn) RemoteAddr() net.Addr {
 
 func TestRequest_Connect(t *testing.T) {
 	// Create a local listener
-	l, err := net.Listen("tcp", "127.0.0.1:0")
+	l, err := net.Listen("tcp", "[::]:0")
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	go func() {
+	go func(t *testing.T) {
 		conn, err := l.Accept()
 		if err != nil {
 			t.Fatalf("err: %v", err)
@@ -46,8 +46,9 @@ func TestRequest_Connect(t *testing.T) {
 			t.Fatalf("bad: %v", buf)
 		}
 		conn.Write([]byte("pong"))
-	}()
+	}(t)
 	lAddr := l.Addr().(*net.TCPAddr)
+	t.Log(lAddr)
 
 	// Make server
 	s := &Server{config: &Config{
