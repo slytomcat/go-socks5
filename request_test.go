@@ -3,6 +3,7 @@ package socks5
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -30,23 +31,23 @@ func TestRequest_Connect(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	go func(t *testing.T) {
+	go func() {
 		conn, err := l.Accept()
 		if err != nil {
-			t.Fatalf("err: %v", err)
+			panic(fmt.Sprintf("err: %v", err))
 		}
 		defer conn.Close()
 
 		buf := make([]byte, 4)
 		if _, err := io.ReadAtLeast(conn, buf, 4); err != nil {
-			t.Fatalf("err: %v", err)
+			panic(fmt.Sprintf("err: %v", err))
 		}
 
 		if !bytes.Equal(buf, []byte("ping")) {
-			t.Fatalf("bad: %v", buf)
+			panic(fmt.Sprintf("bad: %v", buf))
 		}
 		conn.Write([]byte("pong"))
-	}(t)
+	}()
 	lAddr := l.Addr().(*net.TCPAddr)
 	t.Log(lAddr)
 
@@ -109,17 +110,17 @@ func TestRequest_Connect_RuleFail(t *testing.T) {
 	go func() {
 		conn, err := l.Accept()
 		if err != nil {
-			t.Fatalf("err: %v", err)
+			panic(fmt.Sprintf("err: %v", err))
 		}
 		defer conn.Close()
 
 		buf := make([]byte, 4)
 		if _, err := io.ReadAtLeast(conn, buf, 4); err != nil {
-			t.Fatalf("err: %v", err)
+			panic(fmt.Sprintf("err: %v", err))
 		}
 
 		if !bytes.Equal(buf, []byte("ping")) {
-			t.Fatalf("bad: %v", buf)
+			panic(fmt.Sprintf("bad: %v", buf))
 		}
 		conn.Write([]byte("pong"))
 	}()

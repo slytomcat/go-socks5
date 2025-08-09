@@ -3,6 +3,7 @@ package socks5
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -20,29 +21,25 @@ func TestSOCKS5_Connect(t *testing.T) {
 	go func() {
 		conn, err := l.Accept()
 		if err != nil {
-			t.Fatalf("err: %v", err)
+			panic(fmt.Sprintf("err: %v", err))
 		}
 		defer conn.Close()
 
 		buf := make([]byte, 4)
 		if _, err := io.ReadAtLeast(conn, buf, 4); err != nil {
-			t.Fatalf("err: %v", err)
+			panic(fmt.Sprintf("err: %v", err))
 		}
 
 		if !bytes.Equal(buf, []byte("ping")) {
-			t.Fatalf("bad: %v", buf)
+			panic(fmt.Sprintf("bad: %v", buf))
 		}
 		conn.Write([]byte("pong"))
 	}()
 	lAddr := l.Addr().(*net.TCPAddr)
 
 	// Create a socks server
-	creds := StaticCredentials{
-		"foo": "bar",
-	}
-	cator := UserPassAuthenticator{Credentials: creds}
 	conf := &Config{
-		AuthMethods: []Authenticator{cator},
+		AuthMethods: []Authenticator{UserPassAuthenticator{Credentials: StaticCredentials{"foo": "bar"}}},
 		Logger:      log.New(os.Stdout, "", log.LstdFlags),
 	}
 	serv, err := New(conf)
@@ -53,7 +50,7 @@ func TestSOCKS5_Connect(t *testing.T) {
 	// Start listening
 	go func() {
 		if err := serv.ListenAndServe("tcp", "127.0.0.1:12365"); err != nil {
-			t.Fatalf("err: %v", err)
+			panic(fmt.Sprintf("err: %v", err))
 		}
 	}()
 	time.Sleep(10 * time.Millisecond)
@@ -64,7 +61,7 @@ func TestSOCKS5_Connect(t *testing.T) {
 		t.Fatalf("err: %v", err)
 	}
 
-	// Connect, auth and connec to local
+	// Connect, auth and connect to local
 	req := bytes.NewBuffer(nil)
 	req.Write([]byte{5})
 	req.Write([]byte{2, NoAuth, UserPassAuth})
